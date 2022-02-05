@@ -1,0 +1,31 @@
+# PhyDGET Job Command File
+--data manakin_muscle_sh.tsv
+--tree manakin_muscle.nex
+--threads 1
+--transform log2cpm
+--model M4:MAVI+PSPI+CEME+CECO 
+--model M5:MAVI+PSPI+CEME+CECO+LECO
+--model M6:MAVI+PSPI+CEME+CECO+LECO+XEAT
+--model MC1:MAVI,CEME+CECO
+--model MC2:MAVI:CEME+CECO
+--model R41:MAVI+CEME+CECO+PSPI,PSPI
+--model R42:MAVI+CEME+CECO+PSPI:PSPI
+--model R51:MAVI+CEME+CECO+PSPI+LECO,PSPI
+--model R52:MAVI+CEME+CECO+PSPI+LECO:PSPI
+--model MV:MAVI
+--model CE:CEME+CECO
+--model PP:PSPI
+--model LC:LECO
+--model XA:XEAT
+--sample CEME:CEME1S,CEME2S,CEME3S
+--sample PSPI:PSPI1S,PSPI2S,PSPI3S
+--sample LECO:LECO1S,LECO2S,LECO3S
+--sample MAVI:MAVI1S,MAVI2S,MAVI3S
+--sample MIOL:MIOL1S,MIOL2S,MIOL3S
+--sample CECO:CECO1S,CECO2S,CECO3S
+--sample XEAT:XEAT1S,XEAT2S,XEAT3S
+#--verbose
+--out manakin_test1.out
+--bt-exec /home/jack/app/BayesTraitsV3.0.1-Linux/BayesTraitsV3
+# --keepfiles
+--test-gene PREPL
