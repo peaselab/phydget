@@ -1,4 +1,4 @@
-# PhyDGET: Phylogenetic Differential Gene Expression Testing #
+# PhyDGET: Phylogenetic Differential Gene Expression Tool #
 
 ![alt text](https://github.com/peaselab/phydget/blob/main/doc/logo.png)
 
