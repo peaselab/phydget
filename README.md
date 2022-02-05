@@ -8,11 +8,11 @@ PhyDGET is a method for analyzing transcriptome-wide expression data in a phylog
 
 For complete details, see the manual for PhyDGET:
 
-<https://github.com/jbpease/PhyDGET/blob/main/phydget.pdf>
+<https://github.com/peaselab/PhyDGET/blob/main/phydget.pdf>
 
 or 
 
-<https://github.com/jbpease/PhyDGET/blob/main/phydget.html>
+<https://github.com/peaselab/PhyDGET/blob/main/phydget.html>
 
 
 ## How to Cite ##
