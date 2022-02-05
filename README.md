@@ -1,6 +1,6 @@
 # PhyDGET: Phylogenetic Differential Gene Expression Testing #
 
-![alt text](https://github.com/peaselab/phydget/blob/master/doc/logo.png)
+![alt text](https://github.com/peaselab/phydget/blob/main/doc/logo.png)
 
 PhyDGET is a method for analyzing transcriptome-wide expression data in a phylogenetic context to highlight genes whose expression is changing on particular branches of a phylogeny.  PhyDGET is a Pythone3-based parallelized program that connects differential gene expression data transformation to Phylogenetic Comparative Methods (BayesTrait).  PhyDGET also includes post-analysis tools for interpreting the results.  
 
