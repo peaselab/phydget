@@ -370,7 +370,7 @@ def test_gene(data):
     for model in data['models']:
         if model == 'null':
             continue
-        result[model]['deltaL'] = (
+        result[model]['BF'] = (
             2 * (float(result[model]['L']) - float(result['null']['L'])))
     sorted_likelihoods = list(sorted((float(result[x]['L']), x)
                               for x in data['models']))
@@ -384,7 +384,7 @@ def test_gene(data):
         [data['rawdata'][x] for x in data['headers'][1:]] +
         [data['transform_data'][x] for x in data['headers'][1:]] +
         [result[model]['L'] for model in data['model_order']] +
-        [result[model]['deltaL'] for model in data['model_order'][1:]] +
+        [result[model]['BF'] for model in data['model_order'][1:]] +
         [result[model]['alpha'] for model in data['model_order']] +
         [result[model]['sigma'] for model in data['model_order']])
 
@@ -549,7 +549,7 @@ def main(arguments=None):
         ["{}.nrm".format(x) for x in params['headers'][1:]])
     output_headers.extend(
         ["L.{}".format(x) for x in params['model_order']] +
-        ["deltaL.{}".format(x) for x in params['model_order'][1:]] +
+        ["BF.{}".format(x) for x in params['model_order'][1:]] +
         ["alpha.{}".format(x) for x in params['model_order']] +
         ["sigmasq.{}".format(x) for x in params['model_order']])
     for model in params['model_order']:
