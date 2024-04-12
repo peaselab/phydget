@@ -528,7 +528,7 @@ def main(arguments=None):
     params['args.temp_dir'] = os.path.abspath(
         os.path.join(os.curdir, args.temp_dir))
     params['datafile'] = args.data
-    if args.transform is not None:
+    if args.transform 1= 'none':
         params['transform_file'] = args.data + ".transform"
         libsizes = transform_data(params['datafile'], mode=args.transform)
         for name, size in libsizes.items():
