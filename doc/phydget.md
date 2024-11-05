@@ -1,14 +1,14 @@
 ---
 title: PhyDGET <br>\linebreak \centering ![](logo.png)
 author: James B. Pease
-date: 6 August, 2021
+date: 5 November, 2024
 ---
 
 <link rel="stylesheet" type="text/css" media="all" href="mdmanstyle1.css">
 
 ---
 
-***Version 0.3.0***
+***Version 1.1.0***
 
 ---
 
@@ -42,7 +42,7 @@ Please also include the URL <https://www.github.com/peaselab/phydget> in your me
 * Python 3.x (2.x will not work) <https://www.python.org/downloads/>
 * Numpy for Python3 <http://www.numpy.org>
 * Scipy for Python3 <https://www.scipy.org>
-* BayesTraits (V3.0.1) <http://www.evolution.rdg.ac.uk/BayesTraitsV3.0.1/BayesTraitsV3.0.1.html>
+* BayesTraits (V3+) <https://www.evolution.reading.ac.uk/SoftwareMain.html> (We have tested versions V3 through V4.1.3 and all should work identically for PhyDGET) 
 
 
 ## Installation
@@ -158,10 +158,10 @@ The options for transformation (``--transform``) are:
 * ``log2cpm`` (default): Divide each value by the total number of counts per sample times 10^6 (counts-per-million), then log2 transform.
 * ``log2``: Logarithm base 2 transfomation without sample-size normalization.
 * ``cpm``: Divide each value by the total number of counter per sample times 10^6 (counts-per-million).
-* ``none``: Do not transform the data.  Not recommended unless you data are already log-transformed by your own method.
+* ``none``: Do not transform the data.  Not recommended unless you data are already log-transformed by your own method, or you are using data other than raw expression data.
 
-### BayesTraits3 Parameters
-The specifics of the parameters for BayesTrait are listed in the BayesTrait manual.  
+### BayesTraits Parameters
+The specifics of the parameters for BayesTrait are listed in the BayesTrait manual. 
 
 # Program Parameters
 
@@ -175,11 +175,7 @@ The specifics of the parameters for BayesTrait are listed in the BayesTrait manu
 
 ``--data`` (required) = input expression data filepath (csv format) (type=file path, default=None)
 
-``--model`` (required) = Enter one model or specify a file pathof a text file containing multiple models.Models syntax described in the manual. (type=None, default=None)
-
 ``--out`` (required) = output file path (csv format) (type=file path, default=None)
-
-``--sample`` (required) = SA:A1,A1,A3 SB:B1,B2,B3, ... Species id (must match the phylogeny tip labels) followed by comma-separated individual sample ids (must match the headers on the data file). (type=None, default=None)
 
 ``--tree`` (required) = input tree file path (Nexus format) (type=file path, default=None)
 
@@ -189,7 +185,11 @@ The specifics of the parameters for BayesTrait are listed in the BayesTrait manu
 
 ``--bt-iter/--btiter`` = BayesTrait number of iterations usedper stone in the stepping stone sampling. (type=integer, default=10000000)
 
-``--bt-priors/--btpriors`` = BayesTrait uniform prior range. (type=float, default=(-10, 30))
+``--bt-priors-alpha/--btpriorsalpha`` = BayesTrait distribution type and prior range for alpha. (type=None, default=('uniform', -10, 30))
+
+``--bt-priors-sigma/--btpriorssigma`` = BayesTrait distribution type and and prior range for sigma^2. (type=None, default=('uniform', 0, 60))
+
+``--bt-priors-vrbl/--btpriorsvrbl`` = BayesTrait distribution and prior range for variable rates branch length differential. (type=None, default=('sgamma', 1.1, 1.0))
 
 ``--bt-stoneiter/--btstoneiter`` = BayesTrait number of iterations usedper stone in the stepping stone sampling. (type=integer, default=20000)
 
@@ -207,6 +207,9 @@ The specifics of the parameters for BayesTrait are listed in the BayesTrait manu
 
 ``--threads`` = Number of threads for parallelization (type=integer, default=2)
 
+``--tip-values/--tipvalues`` = Values to place at the tips (see manual for details). (type=None, default=all)
+Choices: ('all', 'amean', 'hmean', 'gmean', 'median', 'middle')
+
 ``--transform`` = Data transformation type (see manual for details). (type=None, default=log2cpm)
 Choices: ('none', 'log2', 'cpm', 'log2cpm')
 
@@ -217,6 +220,7 @@ Choices: ('none', 'log2', 'cpm', 'log2cpm')
 # Version History
 
 * **0.3.0:** First public release
+* **1.1.0:** Major Update:  (1) Fixed disparity when running from command-line versus using a job file (2) changes to options for priors to make them more specific and customizable to alpha, sigma, and VRBL (3) added additional modes for placing data at the tips including median, mean, etc. in addition to the default of placing all at the tips (4) fixed a minor bug in the script for non-transformed datasets (5) Renamed the misleading "bestMargin" to "bestL-secondL" to reflect that it is the difference in likelihood between the best and second-best likelihood
 
 # License
 PhyDGET is free software: you can redistribute it and/or modify

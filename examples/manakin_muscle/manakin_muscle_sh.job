@@ -26,6 +26,6 @@
 --sample XEAT:XEAT1S,XEAT2S,XEAT3S
 #--verbose
 --out manakin_test1.out
---bt-exec /home/jack/app/BayesTraitsV3.0.1-Linux/BayesTraitsV3
+--bt-exec BayesTraitsV4
 # --keepfiles
---test-gene PREPL
+--test-gene AAAS

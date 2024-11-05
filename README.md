@@ -18,7 +18,10 @@ or
 ## How to Cite ##
 
 Link to publication: 
-TBA
+Layered evolution of gene expression in “superfast” muscles for courtship
+Pease JB\*, Driver RJ\*, de la Cerda DA, Day LB, Lindsay WR, Schlinger BA, Schuppe ER, Balakrishnan CN, Fuxjager MJ. 2022. *Proceedings of the National Academy of the USA* 119(14) e2119671119.
+
+<https://www.pnas.org/doi/10.1073/pnas.2119671119>
 
 Please also include the URL (https://www.github.com/peaselab/phydget).
 
@@ -27,7 +30,7 @@ Please also include the URL (https://www.github.com/peaselab/phydget).
 ## Contributors ##
 
 * James B. Pease - [www.peaselab.org](http://www.peaselab.org)
-* David de la Cerda - [www.peaselab.org](http://www.peaselab.org)
+* David de la Cerda
 
 ## License ##
 

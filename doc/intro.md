@@ -1,14 +1,14 @@
 ---
 title: PhyDGET <br>\linebreak \centering ![](logo.png)
 author: James B. Pease
-date: 6 August, 2021
+date: 5 November, 2024
 ---
 
 <link rel="stylesheet" type="text/css" media="all" href="mdmanstyle1.css">
 
 ---
 
-***Version 0.3.0***
+***Version 1.1.0***
 
 ---
 
@@ -42,7 +42,7 @@ Please also include the URL <https://www.github.com/peaselab/phydget> in your me
 * Python 3.x (2.x will not work) <https://www.python.org/downloads/>
 * Numpy for Python3 <http://www.numpy.org>
 * Scipy for Python3 <https://www.scipy.org>
-* BayesTraits (V3.0.1) <http://www.evolution.rdg.ac.uk/BayesTraitsV3.0.1/BayesTraitsV3.0.1.html>
+* BayesTraits (V3+) <https://www.evolution.reading.ac.uk/SoftwareMain.html> (We have tested versions V3 through V4.1.3 and all should work identically for PhyDGET) 
 
 
 ## Installation
@@ -158,10 +158,10 @@ The options for transformation (``--transform``) are:
 * ``log2cpm`` (default): Divide each value by the total number of counts per sample times 10^6 (counts-per-million), then log2 transform.
 * ``log2``: Logarithm base 2 transfomation without sample-size normalization.
 * ``cpm``: Divide each value by the total number of counter per sample times 10^6 (counts-per-million).
-* ``none``: Do not transform the data.  Not recommended unless you data are already log-transformed by your own method.
+* ``none``: Do not transform the data.  Not recommended unless you data are already log-transformed by your own method, or you are using data other than raw expression data.
 
-### BayesTraits3 Parameters
-The specifics of the parameters for BayesTrait are listed in the BayesTrait manual.  
+### BayesTraits Parameters
+The specifics of the parameters for BayesTrait are listed in the BayesTrait manual. 
 
 # Program Parameters
 

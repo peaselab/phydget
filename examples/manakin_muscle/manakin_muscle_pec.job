@@ -26,6 +26,6 @@
 --sample XEAT:XEAT1P,XEAT2P,XEAT3P
 #--verbose
 --out manakin_test1_pec.out
---bt-exec BayesTraitsV3
+--bt-exec BayesTraitsV4
 # --keepfiles
---test-gene PREPL
+--test-gene AAAS

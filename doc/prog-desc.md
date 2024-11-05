@@ -8,11 +8,7 @@
 
 ``--data`` (required) = input expression data filepath (csv format) (type=file path, default=None)
 
-``--model`` (required) = Enter one model or specify a file pathof a text file containing multiple models.Models syntax described in the manual. (type=None, default=None)
-
 ``--out`` (required) = output file path (csv format) (type=file path, default=None)
-
-``--sample`` (required) = SA:A1,A1,A3 SB:B1,B2,B3, ... Species id (must match the phylogeny tip labels) followed by comma-separated individual sample ids (must match the headers on the data file). (type=None, default=None)
 
 ``--tree`` (required) = input tree file path (Nexus format) (type=file path, default=None)
 
@@ -22,7 +18,11 @@
 
 ``--bt-iter/--btiter`` = BayesTrait number of iterations usedper stone in the stepping stone sampling. (type=integer, default=10000000)
 
-``--bt-priors/--btpriors`` = BayesTrait uniform prior range. (type=float, default=(-10, 30))
+``--bt-priors-alpha/--btpriorsalpha`` = BayesTrait distribution type and prior range for alpha. (type=None, default=('uniform', -10, 30))
+
+``--bt-priors-sigma/--btpriorssigma`` = BayesTrait distribution type and and prior range for sigma^2. (type=None, default=('uniform', 0, 60))
+
+``--bt-priors-vrbl/--btpriorsvrbl`` = BayesTrait distribution and prior range for variable rates branch length differential. (type=None, default=('sgamma', 1.1, 1.0))
 
 ``--bt-stoneiter/--btstoneiter`` = BayesTrait number of iterations usedper stone in the stepping stone sampling. (type=integer, default=20000)
 
@@ -39,6 +39,9 @@
 ``--test-gene/--testgene`` = Enter exacty gene name from first column ofinput csv file to do a test run on a single gene. (type=None, default=None)
 
 ``--threads`` = Number of threads for parallelization (type=integer, default=2)
+
+``--tip-values/--tipvalues`` = Values to place at the tips (see manual for details). (type=None, default=all)
+Choices: ('all', 'amean', 'hmean', 'gmean', 'median', 'middle')
 
 ``--transform`` = Data transformation type (see manual for details). (type=None, default=log2cpm)
 Choices: ('none', 'log2', 'cpm', 'log2cpm')
