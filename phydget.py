@@ -13,9 +13,9 @@ import sys
 import argparse
 import subprocess
 from multiprocessing import Manager, Pool
+from itertools import chain
 import numpy as np
-from scipy.stats import hmean
-
+from scipy.stats import gmean, hmean
 
 _LICENSE = """
 http://www.github.org/jbpease/phydget
@@ -75,11 +75,11 @@ def read_config(configfilepath):
     args = []
     argorder = []
     with open(configfilepath, 'r') as cfile:
-        for line in [l.strip() for l in cfile.readlines()]:
+        for line in [x.strip() for x in cfile.readlines()]:
             if not line or line[0] == '#':
                 continue
             if '=' in line:
-                line = line.replace("=")
+                line = line.replace("=", ' ')
             elems = [d.strip() for d in line.split()]
             if elems[0] not in argdict:
                 argdict[elems[0]] = None if len(elems) == 1 else elems[1:]
@@ -144,15 +144,23 @@ def generate_btfiles(modelname, datafile, groups,
                 "2\n"
                 "Burnin {}\n"
                 "Iterations {}\n"
-                "PriorAll uniform {} {}\n"
-                "DistData {}\n"
+                "Prior Alpha-1 {} {} {}\n"
+                "Prior Sigma-1 {} {} {}\n"
+                "{}"
                 "Stones {} {}\n"
                 "Run").format(
                     btparams['bt_burnin'],
                     btparams['bt_iter'],
-                    btparams['bt_priors'][0],
-                    btparams['bt_priors'][1],
-                    datafile,
+                    btparams['bt_priors_alpha'][0],
+                    btparams['bt_priors_alpha'][1],
+                    btparams['bt_priors_alpha'][2],
+                    btparams['bt_priors_sigma'][0],
+                    btparams['bt_priors_sigma'][1],
+                    btparams['bt_priors_sigma'][2],
+                    ("DistData {}\n".format(datafile)
+                     if datafile is not None
+                     else ''
+                     ),
                     btparams['bt_stones'],
                     btparams['bt_stoneiter']
                 ))
@@ -163,13 +171,21 @@ def generate_btfiles(modelname, datafile, groups,
                 "2\n"
                 "Burnin {}\n"
                 "Iterations {}\n"
-                "PriorAll uniform {} {}\n"
-                "DistData {}\n").format(
+                "Prior Alpha-1 {} {} {}\n"
+                "Prior Sigma-1 {} {} {}\n"
+                "{}").format(
                     btparams['bt_burnin'],
                     btparams['bt_iter'],
-                    btparams['bt_priors'][0],
-                    btparams['bt_priors'][1],
-                    datafile
+                    btparams['bt_priors_alpha'][0],
+                    btparams['bt_priors_alpha'][1],
+                    btparams['bt_priors_alpha'][2],
+                    btparams['bt_priors_sigma'][0],
+                    btparams['bt_priors_sigma'][1],
+                    btparams['bt_priors_sigma'][2],
+                    ("DistData {}\n".format(datafile)
+                     if datafile is not None
+                     else ''
+                     ),
                 ))
             for i, grp in enumerate(groups):
                 subtags = []
@@ -181,6 +197,12 @@ def generate_btfiles(modelname, datafile, groups,
                 altfile.write(
                     "LocalTransform TransBranch{} {} Branch\n".format(
                         i+1, " ".join(subtags)))
+            altfile.write(
+                "Prior VRBL {} {} {}\n".format(
+                    btparams['bt_priors_vrbl'][0],
+                    btparams['bt_priors_vrbl'][1],
+                    btparams['bt_priors_vrbl'][2],
+                    ))
             altfile.write(("Stones {} {}\nRun").format(
                 btparams['bt_stones'],
                 btparams['bt_stoneiter']
@@ -204,7 +226,7 @@ def preprocess_entries(params, queue, lock):
     with open(params['transform_file']) as transform_file:
         transform_file.readline()
         for entry in transform_file:
-            sample = {'data': {}}
+            sample = {'rawdata_by_species': {}}
             entry = entry.rstrip().split()
             sample['gene'] = entry[0]
             if params['args.test_gene'] is not None:
@@ -216,26 +238,22 @@ def preprocess_entries(params, queue, lock):
                                              if i > 0])
             sample['transbranchsigns'] = {'null': []}
             for model in params['models']:
-                # print(model, params['models'][model])
                 if model == 'null':
                     continue
                 group_signs = []
                 for igrp, group in enumerate(params['models'][model]['fg']):
-                    # print(igrp, group)
                     fg_data = []
                     bg_data = []
                     for specname in params['models'][model]['fg'][igrp]:
-                        # print(specname)
-                        # print(params['col_data'])
-                        sample['data'][specname] = (
+                        sample['rawdata_by_species'][specname] = (
                             [float(entry[x])
                              for x in params['col_data'][specname]])
-                        fg_data.extend(sample['data'][specname])
+                        fg_data.extend(sample['rawdata_by_species'][specname])
                     for specname in params['models'][model]['bg'][igrp]:
-                        sample['data'][specname] = (
+                        sample['rawdata_by_species'][specname] = (
                             [float(entry[x])
                              for x in params['col_data'][specname]])
-                        bg_data.extend(sample['data'][specname])
+                        bg_data.extend(sample['rawdata_by_species'][specname])
                     group_signs.append(
                         "+" if np.mean(fg_data) > np.mean(bg_data) else "-")
                 sample['transbranchsigns'][model] = group_signs[:]
@@ -244,7 +262,9 @@ def preprocess_entries(params, queue, lock):
                 'bt_burnin': params['args.bt_burnin'],
                 'bt_stones': params['args.bt_stones'],
                 'bt_stoneiter': params['args.bt_stoneiter'],
-                'bt_priors': params['args.bt_priors']
+                'bt_priors_alpha': params['args.bt_priors_alpha'],
+                'bt_priors_sigma': params['args.bt_priors_sigma'],
+                'bt_priors_vrbl': params['args.bt_priors_vrbl'],
                 }
             sample['args.bt_exec'] = params['args.bt_exec']
             sample['args.tree'] = params['args.tree']
@@ -257,6 +277,9 @@ def preprocess_entries(params, queue, lock):
             sample['model_order'] = params['model_order']
             sample['headers'] = params['headers']
             sample['species'] = params['all_species']
+            sample['args.transform'] = params['args.transform']
+            sample['args.tip_values'] = params['args.tip_values']
+            sample['args.verbose'] = params['args.verbose']
             # sample['transbranchsigns'] = transbranchsigns
             sample['k'] = k + 0
             all_samples.append(sample)
@@ -280,9 +303,12 @@ def test_gene(data):
         data['datafilepath.{}'.format(model)] = os.path.join(
             data['args.temp_dir'],
             '{}.{}.data'.format(data['prefix'], testid))
-        data['linkfilepath.{}'.format(model)] = os.path.join(
-            data['args.temp_dir'],
-            '{}.{}.link'.format(data['prefix'], testid))
+        if data['args.tip_values'] in ('all', 'middle'):
+            data['linkfilepath.{}'.format(model)] = os.path.join(
+                data['args.temp_dir'],
+                '{}.{}.link'.format(data['prefix'], testid))
+        else:
+            data['linkfilepath.{}'.format(model)] = None
         data['stonesfilepath.{}'.format(model)] = os.path.join(
             data['args.temp_dir'],
             '{}.{}.data.Stones.txt'.format(data['prefix'], testid))
@@ -298,17 +324,43 @@ def test_gene(data):
         data['treesfilepath.{}'.format(model)] = os.path.join(
             data['args.temp_dir'],
             '{}.{}.data.Output.trees'.format(data['prefix'], testid))
-        with open(data['linkfilepath.{}'.format(model)], 'w') as linkfile:
-            for xspec in data['data']:
-                linkfile.write("{}\t{}\t{}\n".format(
-                    xspec,
-                    "Unlinked",
-                    ",".join([str(x) for x in data['data'][xspec]])))
+        if data['args.tip_values'] in ('all', 'middle'):
+            with open(data['linkfilepath.{}'.format(model)], 'w') as linkfile:
+                for xspec in data['rawdata_by_species']:
+                    xdata = data['rawdata_by_species'][xspec][:]
+                    if data['args.tip_values'] == 'middle':
+                        if len(xdata) % 2 == 0:
+                            xdata = list(
+                                sorted(xdata))[len(xdata)//2-1:len(xdata)//2+1]
+                        else:
+                            xdata = list(
+                                sorted(xdata))[len(xdata)//2-1:len(xdata)//2+2]
+                    linkfile.write("{}\t{}\t{}\n".format(
+                        xspec,
+                        "Unlinked",
+                        ",".join([str(x) for x in xdata])))
         with open(data['datafilepath.{}'.format(model)], 'w') as tmpfile:
-            for xspec in data['data']:
-                tmpfile.write("{}\t{}\n".format(
-                    xspec,
-                    np.log2(np.mean([2**x for x in data['data'][xspec]]))))
+
+            for xspec in data['rawdata_by_species']:
+                sdata = data['rawdata_by_species'][xspec]
+                if len(sdata) == 1:
+                    sdata = sdata + 0
+                elif data['args.tip_values'] == 'median':
+                    sdata = np.median(sdata)
+                elif data['args.tip_values'] == 'amean':
+                    sdata = np.mean(sdata)
+                elif data['args.tip_values'] == 'gmean':
+                    sdata = gmean(data)
+                elif data['args.tip_values'] == 'hmean':
+                    sdata = hmean(data['rawdata'][xspec])
+                else:
+                    sdata = np.median(sdata)
+                if data['args.transform'] in ('log2cpm', 'log2'):
+                    sdata = np.log2(sdata)
+                # Set the species data at the tips for the main file (this will
+                # largely be ignored if you use distributional data
+                # (--tip-values=all/middle)
+                tmpfile.write("{}\t{}\n".format(xspec, sdata))
         print()
         generate_btfiles(model,
                          data['linkfilepath.{}'.format(model)],
@@ -317,7 +369,8 @@ def test_gene(data):
                          data['btparams'])
         cmd = [data['args.bt_exec'], data['args.tree'],
                data['datafilepath.{}'.format(model)]]
-        print('Calling: ', ' '.join(cmd))
+        print('Calling: ', ' '.join(cmd), "<",
+              data['btfilepath.{}'.format(model)])
         proc = subprocess.Popen(
             cmd,
             stdin=open(data['btfilepath.{}'.format(model)]),
@@ -327,7 +380,9 @@ def test_gene(data):
         likelihood_entry = open(
             data['stonesfilepath.{}'.format(model)]).readlines()[-1]
         result[model]['L'] = likelihood_entry.split()[-1].strip()
-        print(data['k'], model, result[model]['L'])
+        if data['args.verbose'] is True:
+            print("Gene: {} @ Model {} L={}.".format(
+                data['k'], model, result[model]['L']))
         # BEGIN LOG FILE PROCESSING
         result[model]['alpha'] = []
         alphas = []
@@ -350,14 +405,21 @@ def test_gene(data):
                 if model != 'null':
                     for i in range(len(data['models'][model]['groups'])):
                         transbranches[i].append(float(entry[5+i]))
-        result[model]['alpha'] = (
-            np.log2(hmean([2**x for x in alphas])))
-        result[model]['sigma'] = (
-            np.log2(hmean([2**x for x in sigmas])))
-        if model != 'null':
-            result[model]['branchmeans'] = [
-                np.log2(hmean([2**x for x in xdata]))
-                for xdata in transbranches]
+        if data['args.transform'] in ('log2', 'log2cpm'):
+            result[model]['alpha'] = (
+                np.log2(hmean([2**x for x in alphas])))
+            result[model]['sigma'] = (
+                np.log2(hmean([2**x for x in sigmas])))
+            if model != 'null':
+                result[model]['branchmeans'] = [
+                    np.log2(hmean([2**x for x in xdata]))
+                    for xdata in transbranches]
+        else:
+            result[model]['alpha'] = np.mean(alphas)
+            result[model]['sigma'] = np.mean(sigmas)
+            if model != 'null':
+                result[model]['branchmeans'] = [
+                    np.mean(xdata) for xdata in transbranches]
     # Remove files
     if data['args.keep_files'] is False:
         for model in data['models']:
@@ -374,7 +436,11 @@ def test_gene(data):
             2 * (float(result[model]['L']) - float(result['null']['L'])))
     sorted_likelihoods = list(sorted((float(result[x]['L']), x)
                               for x in data['models']))
-    print(sorted_likelihoods)
+    sorted_bfs = list(sorted([(float(result[x]['BF']), x)
+                              for x in data['model_order'][1:]], reverse=True))
+    if data['args.verbose'] is True:
+        print("Sorted Likelihoods:", sorted_likelihoods[::-1])
+        print("Sorted BF:", sorted_bfs)
     # print(transbranchsigns)
     best_model = sorted_likelihoods[-1][1]
     best_delta = (float(sorted_likelihoods[-1][0]) -
@@ -389,8 +455,6 @@ def test_gene(data):
         [result[model]['sigma'] for model in data['model_order']])
 
     for model in data['model_order'][1:]:
-        # print(data['transbranchsigns'][model])
-        # print(data['models'][model])
         for i, _ in enumerate(data['models'][model]['groups']):
             output_entry.append(result[model]['branchmeans'][i])
             output_entry.append(data['transbranchsigns'][model][i])
@@ -433,15 +497,27 @@ def generate_argparser():
                                  "log2cpm"),
                         help=("Data transformation type "
                               "(see manual for details)."))
+    parser.add_argument("--tip-values", "--tipvalues",
+                        default="all",
+                        choices=("all",
+                                 "amean",
+                                 "hmean",
+                                 "gmean",
+                                 "median",
+                                 "middle"),
+                        help=("Values to place at the tips "
+                              "(see manual for details)."))
     parser.add_argument("--model",
                         required=True,
                         nargs="+",
+                        action="append",
                         help=("Enter one model or specify a file path"
                               "of a text file containing multiple models."
                               "Models syntax described in the manual."))
     parser.add_argument("--sample",
                         required=True,
                         nargs="+",
+                        action="append",
                         help=("SA:A1,A1,A3 SB:B1,B2,B3, ... "
                               "Species id (must match the phylogeny tip "
                               "labels) followed by comma-separated "
@@ -472,11 +548,21 @@ def generate_argparser():
                         default=10000000,
                         help=("BayesTrait number of iterations used"
                               "per stone in the stepping stone sampling."))
-    parser.add_argument("--bt-priors", "--btpriors",
-                        type=float,
-                        nargs=2,
-                        default=(-10, 30),
-                        help=("BayesTrait uniform prior range."))
+    parser.add_argument("--bt-priors-alpha", "--btpriorsalpha",
+                        nargs=3,
+                        default=("uniform", -10, 30),
+                        help=("BayesTrait distribution type "
+                              "and prior range for alpha."))
+    parser.add_argument("--bt-priors-sigma", "--btpriorssigma",
+                        nargs=3,
+                        default=("uniform", 0, 60),
+                        help=("BayesTrait distribution type and "
+                              "and prior range for sigma^2."))
+    parser.add_argument("--bt-priors-vrbl", "--btpriorsvrbl",
+                        nargs=3,
+                        default=("sgamma", 1.1, 1.0),
+                        help=("BayesTrait distribution and prior range for"
+                              " variable rates branch length differential."))
     parser.add_argument("--bt-stones", "--bt-stones",
                         type=int,
                         default=200,
@@ -491,6 +577,9 @@ def generate_argparser():
                         help=("Enter exacty gene name from first column of"
                               "input csv file to do a test run on a "
                               "single gene."))
+    parser.add_argument('--version',
+                        action='version', version='%(prog)s 1.1',
+                        help="displays the version")
     parser.add_argument('--verbose',
                         action="store_true",
                         help="extra screen output")
@@ -511,17 +600,25 @@ def main(arguments=None):
     time0 = time()
     parser = generate_argparser()
     args = parser.parse_args(args=arguments)
+    args.sample = list(chain.from_iterable(args.sample))
+    args.model = list(chain.from_iterable(args.model))
+    print(args)
     logfile = open(args.out + ".log", 'w')
     logfile.write(" ".join(arguments) + "\n")
     params = {}
     params.update(parse_models(args.model, args.sample))
     params['col_data'] = {}
+    params['args.transform'] = args.transform
+    params['args.tip_values'] = args.tip_values
+    params['args.verbose'] = args.verbose
     params['args.bt_exec'] = args.bt_exec
     params['args.bt_iter'] = args.bt_iter
     params['args.bt_burnin'] = args.bt_burnin
     params['args.bt_stones'] = args.bt_stones
     params['args.bt_stoneiter'] = args.bt_stoneiter
-    params['args.bt_priors'] = args.bt_priors
+    params['args.bt_priors_alpha'] = args.bt_priors_alpha
+    params['args.bt_priors_sigma'] = args.bt_priors_sigma
+    params['args.bt_priors_vrbl'] = args.bt_priors_vrbl
     params['args.tree'] = args.tree
     params['args.temp_prefix'] = args.temp_prefix
     params['args.keep_files'] = args.keep_files
@@ -557,7 +654,7 @@ def main(arguments=None):
             output_headers.extend(['transB.{}.{}'.format(model, i),
                                    'signB.{}.{}'.format(model, i)])
     output_headers.append("bestmodel")
-    output_headers.append("bestmargin")
+    output_headers.append("bestL-secondL")
     with open(args.out, 'w') as outfile:
         outfile.write("\t".join(output_headers) + "\n")
     # Prepare Voom Design File
