@@ -8,7 +8,7 @@ date: 5 November, 2024
 
 ---
 
-***Version 1.1.0***
+***Version 1.1.1***
 
 ---
 

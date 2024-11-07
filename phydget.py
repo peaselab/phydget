@@ -158,7 +158,7 @@ def generate_btfiles(modelname, datafile, groups,
                     btparams['bt_priors_sigma'][1],
                     btparams['bt_priors_sigma'][2],
                     ("DistData {}\n".format(datafile)
-                     if datafile is not None
+                     if datafile != ''
                      else ''
                      ),
                     btparams['bt_stones'],
@@ -183,7 +183,7 @@ def generate_btfiles(modelname, datafile, groups,
                     btparams['bt_priors_sigma'][1],
                     btparams['bt_priors_sigma'][2],
                     ("DistData {}\n".format(datafile)
-                     if datafile is not None
+                     if datafile != ''
                      else ''
                      ),
                 ))
@@ -197,12 +197,13 @@ def generate_btfiles(modelname, datafile, groups,
                 altfile.write(
                     "LocalTransform TransBranch{} {} Branch\n".format(
                         i+1, " ".join(subtags)))
-            altfile.write(
-                "Prior VRBL {} {} {}\n".format(
-                    btparams['bt_priors_vrbl'][0],
-                    btparams['bt_priors_vrbl'][1],
-                    btparams['bt_priors_vrbl'][2],
-                    ))
+            if btparams['bt_priors_vrbl'] is not None:
+                altfile.write(
+                    "Prior VRBL {} {} {}\n".format(
+                        btparams['bt_priors_vrbl'][0],
+                        btparams['bt_priors_vrbl'][1],
+                        btparams['bt_priors_vrbl'][2],
+                        ))
             altfile.write(("Stones {} {}\nRun").format(
                 btparams['bt_stones'],
                 btparams['bt_stoneiter']
@@ -308,7 +309,7 @@ def test_gene(data):
                 data['args.temp_dir'],
                 '{}.{}.link'.format(data['prefix'], testid))
         else:
-            data['linkfilepath.{}'.format(model)] = None
+            data['linkfilepath.{}'.format(model)] = ''
         data['stonesfilepath.{}'.format(model)] = os.path.join(
             data['args.temp_dir'],
             '{}.{}.data.Stones.txt'.format(data['prefix'], testid))
@@ -560,9 +561,9 @@ def generate_argparser():
                               "and prior range for sigma^2."))
     parser.add_argument("--bt-priors-vrbl", "--btpriorsvrbl",
                         nargs=3,
-                        default=("sgamma", 1.1, 1.0),
                         help=("BayesTrait distribution and prior range for"
-                              " variable rates branch length differential."))
+                              " variable rates branch length differential."
+                              " This is advanced and requires BayesTraitV4."))
     parser.add_argument("--bt-stones", "--bt-stones",
                         type=int,
                         default=200,
@@ -578,7 +579,7 @@ def generate_argparser():
                               "input csv file to do a test run on a "
                               "single gene."))
     parser.add_argument('--version',
-                        action='version', version='%(prog)s 1.1',
+                        action='version', version='%(prog)s 1.1.1',
                         help="displays the version")
     parser.add_argument('--verbose',
                         action="store_true",
@@ -602,7 +603,6 @@ def main(arguments=None):
     args = parser.parse_args(args=arguments)
     args.sample = list(chain.from_iterable(args.sample))
     args.model = list(chain.from_iterable(args.model))
-    print(args)
     logfile = open(args.out + ".log", 'w')
     logfile.write(" ".join(arguments) + "\n")
     params = {}

@@ -22,7 +22,7 @@
 
 ``--bt-priors-sigma/--btpriorssigma`` = BayesTrait distribution type and and prior range for sigma^2. (type=None, default=('uniform', 0, 60))
 
-``--bt-priors-vrbl/--btpriorsvrbl`` = BayesTrait distribution and prior range for variable rates branch length differential. (type=None, default=('sgamma', 1.1, 1.0))
+``--bt-priors-vrbl/--btpriorsvrbl`` = BayesTrait distribution and prior range for variable rates branch length differential. This is advanced and requires BayesTraitV4. (type=None, default=None)
 
 ``--bt-stoneiter/--btstoneiter`` = BayesTrait number of iterations usedper stone in the stepping stone sampling. (type=integer, default=20000)
 
